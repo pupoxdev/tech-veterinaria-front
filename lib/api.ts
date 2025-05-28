@@ -93,6 +93,11 @@ export const appointmentService = {
       method: "POST",
       body: JSON.stringify(appointmentData),
     }),
+  updateStatus: (appointmentId: number, estado: string, observaciones?: string) =>
+    apiRequest(`/citas/${appointmentId}/estado`, {
+      method: "PUT",
+      body: JSON.stringify({ estado, observaciones }),
+    }),
 }
 
 // Servicios de historial médico

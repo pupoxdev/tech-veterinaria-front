@@ -5,9 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, Users, LogOut, Clock } from "lucide-react"
+import { Calendar, Users, LogOut, Clock, Settings } from "lucide-react"
 import { AppointmentForm } from "@/components/appointments/appointment-form"
 import { MedicalHistory } from "@/components/medical/medical-history"
+import { AppointmentStatusModal } from "@/components/appointments/appointment-status-modal"
 import { appointmentService, petService } from "@/lib/api"
 
 interface VeterinarianDashboardProps {
@@ -21,6 +22,8 @@ export function VeterinarianDashboard({ user, onLogout }: VeterinarianDashboardP
   const [mascotas, setMascotas] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [selectedAppointment, setSelectedAppointment] = useState(null)
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -39,6 +42,21 @@ export function VeterinarianDashboard({ user, onLogout }: VeterinarianDashboardP
     }
   }
 
+  const handleUpdateStatus = async (appointmentId: number, status: string, observations?: string) => {
+    try {
+      await appointmentService.updateStatus(appointmentId, status, observations)
+      await loadData() // Recargar datos después de actualizar
+    } catch (error) {
+      console.error("Error al actualizar estado:", error)
+      throw error
+    }
+  }
+
+  const openStatusModal = (appointment: any) => {
+    setSelectedAppointment(appointment)
+    setIsStatusModalOpen(true)
+  }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("es-ES")
   }
@@ -48,6 +66,19 @@ export function VeterinarianDashboard({ user, onLogout }: VeterinarianDashboardP
       hour: "2-digit",
       minute: "2-digit",
     })
+  }
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case "programada":
+        return "bg-blue-100 text-blue-800"
+      case "completada":
+        return "bg-green-100 text-green-800"
+      case "cancelada":
+        return "bg-red-100 text-red-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
   }
 
   if (loading) {
@@ -128,9 +159,17 @@ export function VeterinarianDashboard({ user, onLogout }: VeterinarianDashboardP
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <Badge variant="outline">{cita.estado}</Badge>
-                          <p className="text-sm text-gray-600 mt-1">{cita.motivo}</p>
+                        <div className="text-right space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Badge className={getStatusBadgeColor(cita.estado)}>{cita.estado}</Badge>
+                            {cita.estado === "programada" && (
+                              <Button size="sm" variant="outline" onClick={() => openStatusModal(cita)}>
+                                <Settings className="h-4 w-4 mr-1" />
+                                Gestionar
+                              </Button>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-600">{cita.motivo}</p>
                         </div>
                       </div>
                     ))}
@@ -185,6 +224,14 @@ export function VeterinarianDashboard({ user, onLogout }: VeterinarianDashboardP
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Modal para gestionar estado de citas */}
+      <AppointmentStatusModal
+        isOpen={isStatusModalOpen}
+        onClose={() => setIsStatusModalOpen(false)}
+        appointment={selectedAppointment}
+        onUpdateStatus={handleUpdateStatus}
+      />
     </div>
   )
 }

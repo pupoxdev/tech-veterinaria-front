@@ -50,6 +50,19 @@ export function OwnerDashboard({ user, onLogout }: OwnerDashboardProps) {
     })
   }
 
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case "programada":
+        return "bg-blue-100 text-blue-800"
+      case "completada":
+        return "bg-green-100 text-green-800"
+      case "cancelada":
+        return "bg-red-100 text-red-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -165,7 +178,7 @@ export function OwnerDashboard({ user, onLogout }: OwnerDashboardProps) {
                             </p>
                           </div>
                         </div>
-                        <Badge variant="outline">{cita.estado}</Badge>
+                        <Badge className={getStatusBadgeColor(cita.estado)}>{cita.estado}</Badge>
                       </div>
                     ))}
                   </div>
